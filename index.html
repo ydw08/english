@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>영단어 외우기 프로그램</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; background-color: #f9f9f9; }
+    textarea { width: 100%; height: 180px; margin-bottom: 10px; }
+    button { padding: 10px 20px; font-size: 16px; }
+    #quizBox, #scoreBox { display: none; margin-top: 30px; padding: 20px; background: #fff; border: 1px solid #ccc; border-radius: 8px; }
+    input[type="text"] { width: 100%; padding: 8px; margin-top: 10px; }
+    .result { margin-top: 10px; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  <!-- 단어 입력 영역 -->
+  <div id="inputSection">
+    <h2>📝 외울 단어 입력</h2>
+    <p><strong>형식:</strong> 영단어:뜻 (다음단어를 작성할 때는 엔터를 눌러 밑에 줄에 작성해주세요!)</p>
+    <textarea id="wordInput" placeholder="예: apple:사과\nbanana:바나나"></textarea><br>
+    <button onclick="startQuiz()">퀴즈 시작</button>
+  </div>
+
+  <!-- 퀴즈 영역 -->
+  <div id="quizBox">
+    <h2>📘 뜻을 맞춰보세요!</h2>
+    <p>단어: <strong id="wordText" style="font-size: 1.4em;"></strong></p>
+    <input type="text" id="userAnswer" placeholder="뜻을 입력하세요" />
+    <button onclick="checkAnswer()">정답 확인</button>
+    <p class="result" id="resultMsg"></p>
+  </div>
+
+  <!-- 점수 요약 -->
+  <div id="scoreBox">
+    <h2>✅ 퀴즈 결과</h2>
+    <p id="scoreSummary"></p>
+    <button onclick="goToInput()">단어 다시 입력하기</button>
+  </div>
+
+  <script>
+    let allWords = [];
+    let quizSet = [];
+    let currentIndex = 0;
+    let currentWord = null;
+    let correctCount = 0;
+    let incorrectCount = 0;
+
+    function parseWords(text) {
+      return text.split("\n").map(line => {
+        const parts = line.split(":");
+        if (parts.length === 2) {
+          const word = parts[0].trim();
+          const meaning = parts[1].trim();
+          if (word && meaning) return { word, meaning };
+        }
+      }).filter(Boolean);
+    }
+
+    function shuffle(array) {
+      return array.sort(() => Math.random() - 0.5);
+    }
+
+    function startQuiz() {
+      const rawInput = document.getElementById('wordInput').value.trim();
+      allWords = parseWords(rawInput);
+      if (allWords.length === 0) {
+        alert("단어를 올바르게 입력해주세요.");
+        return;
+      }
+
+      correctCount = 0;
+      incorrectCount = 0;
+
+      document.getElementById('inputSection').style.display = 'none';
+      document.getElementById('quizBox').style.display = 'block';
+      document.getElementById('scoreBox').style.display = 'none';
+
+      startSet();
+    }
+
+    function startSet() {
+      quizSet = shuffle([...allWords]);
+      currentIndex = 0;
+      nextQuestion();
+    }
+
+    function nextQuestion() {
+      if (currentIndex >= quizSet.length) {
+        showScore();
+        return;
+      }
+
+      currentWord = quizSet[currentIndex++];
+      document.getElementById('wordText').textContent = currentWord.word;
+      document.getElementById('userAnswer').value = '';
+      document.getElementById('resultMsg').textContent = '';
+    }
+
+    function checkAnswer() {
+      const input = document.getElementById('userAnswer').value.trim();
+      const resultEl = document.getElementById('resultMsg');
+      if (input === currentWord.meaning) {
+        resultEl.textContent = "✅ 정답입니다!";
+        resultEl.style.color = "green";
+        correctCount++;
+      } else {
+        resultEl.textContent = `❌ 오답! 정답은: ${currentWord.meaning}`;
+        resultEl.style.color = "red";
+        incorrectCount++;
+      }
+
+      setTimeout(nextQuestion, 1500);
+    }
+
+    function showScore() {
+      const total = correctCount + incorrectCount;
+      const rate = ((correctCount / total) * 100).toFixed(1);
+
+      document.getElementById('quizBox').style.display = 'none';
+      document.getElementById('scoreBox').style.display = 'block';
+      document.getElementById('scoreSummary').innerHTML = `
+        총 문제 수: ${total}개<br>
+        맞은 개수: ${correctCount}개<br>
+        틀린 개수: ${incorrectCount}개<br>
+        정답률: ${rate}%
+      `;
+    }
+
+    function goToInput() {
+      document.getElementById('inputSection').style.display = 'block';
+      document.getElementById('scoreBox').style.display = 'none';
+      // 입력창 내용은 유지됨
+    }
+  </script>
+
+</body>
+</html>
